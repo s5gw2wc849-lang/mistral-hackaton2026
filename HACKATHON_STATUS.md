@@ -11,35 +11,39 @@ The long-term product goal is:
 - accept a free-form French succession description from a user
 - transform it into a structured JSON object matching a target schema
 
-The target JSON schema is not defined yet. Because of that, the current phase is
-focused on collecting and generating high-quality input descriptions only.
+For this hackathon, the working “master schema” is already defined and lives at:
+
+- `../w5/glinerExtract/schema/schema.full.json`
+
+We currently represent training targets as **TOON** (sparse, schema-driven),
+because it is cheaper to serialize than JSON and reduces “formatting failure”
+noise during fine-tuning.
 
 ## Current Phase
 
-The current phase is input corpus building.
+The current phase is building **training pairs**.
 
 What we are doing now:
 
 - collecting real succession case descriptions already exercised by E2E tests
-- generating many additional synthetic descriptions with controlled diversity
-- preparing a large training-ready pool of user-style descriptions
+- generating many additional synthetic cases with controlled diversity
+- generating a **sparse structured target** for each case (server-side)
+- preparing a training-ready pool of `{ case_text, target_toon }` pairs
 
 What we are **not** doing yet:
 
-- defining the final JSON schema
-- generating gold JSON outputs
-- training the final `description -> JSON` model
+- training the final fine-tuned model
 - exporting a fine-tuned model to ONNX
 
 ## Why This Order
 
 We intentionally separated the work into phases:
 
-1. Build a strong corpus of varied input descriptions.
-2. Define the target JSON schema.
-3. Annotate or generate the expected JSON outputs.
-4. Fine-tune the model on `description -> JSON`.
-5. Optionally export for browser inference later.
+1. Import all real E2E cases as seeds.
+2. Define/lock a master schema and a single sparse target representation (TOON).
+3. Generate many additional **paired** synthetic samples (target-first).
+4. Fine-tune the model on `description -> structured target`.
+5. Optionally export for browser inference later (ONNX / Transformers.js).
 
 This keeps the current work useful even before the final schema is available.
 
@@ -90,7 +94,8 @@ It does the following:
 
 - issues one generation instruction at a time
 - balances multiple diversity dimensions
-- persists issued instructions and generated cases
+- generates a schema-driven sparse **target TOON** (server-side)
+- persists issued instructions and submitted case texts
 - updates progress and quota summaries on disk
 - exports a merged training file as new cases are submitted
 
@@ -101,6 +106,18 @@ Main files:
 - `data/case_instruction_server/config.json`
 - `data/case_instruction_server/summary.md`
 - `data/case_instruction_server/full_training_cases_mistral.jsonl`
+
+Key pipeline design:
+
+- The server generates `target_toon` first.
+- Agents only generate `case_text` from the provided TOON and style constraints.
+- Targets are **sparse only**: no `null`, no empty objects/lists, only relevant branches.
+
+Quality guardrails added after initial samples:
+
+- removed placeholder strings like “Clause ou élément mentionné” / “Information fournie”
+- fixed regime/statut coherence (no “PACSE + participation”, etc.)
+- reject submissions that leak schema keys in `snake_case` into the free-form text
 
 ## Current Production-Oriented Quota Profile (v6)
 

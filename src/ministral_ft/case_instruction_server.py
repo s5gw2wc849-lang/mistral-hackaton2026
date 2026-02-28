@@ -1969,19 +1969,43 @@ class InstructionServerApp:
 
         if expected_type == "number":
             key_norm = key.lower()
+            path_norm = "/".join(path).lower()
             if "age" in key_norm:
                 if self._path_contains(path, "defunt"):
                     return rng.randint(55, 94)
                 return rng.randint(18, 92)
+            if "esperance_de_vie" in key_norm:
+                return rng.randint(5, 40)
             if "quote" in key_norm or "quotite" in key_norm or "part" in key_norm:
                 return round(rng.uniform(0.1, 1.0), 2)
             if "taux" in key_norm or "decote" in key_norm:
-                return round(rng.uniform(0.01, 0.75), 2)
+                return round(rng.uniform(0.01, 0.15), 2)
             if "duree" in key_norm or "anciennete" in key_norm:
                 return rng.randint(1, 25)
+            # Many duration blocks are `{ valeur, unite }` where the leaf key is just `valeur`.
+            if key_norm == "valeur" and ("duree" in path_norm or "anciennete" in path_norm or "soins" in path_norm):
+                return rng.randint(1, 36)
             if "mois" in key_norm:
                 return rng.randint(1, 48)
-            if "valeur" in key_norm or "montant" in key_norm or "capital" in key_norm or "prix" in key_norm or "cout" in key_norm or "revenus" in key_norm or "charges" in key_norm:
+            if "patrimoine_" in key_norm or "patrimoine" in key_norm:
+                return int(rng.randint(50_000, 5_000_000))
+            if "montant_mensuel" in key_norm and "indemnite_occupation" in path_norm:
+                return int(rng.randint(200, 5_000))
+            if "revenus_mensuels" in key_norm or "charges_mensuelles" in key_norm:
+                return int(rng.randint(500, 15_000))
+            if "loyers_encaisses" in key_norm or "charges_reglees" in key_norm:
+                return int(rng.randint(0, 250_000))
+            if "valeurs" in path_norm:
+                return int(rng.randint(1_000, 900_000))
+            if (
+                "valeur" in key_norm
+                or "montant" in key_norm
+                or "capital" in key_norm
+                or "prix" in key_norm
+                or "cout" in key_norm
+                or "revenus" in key_norm
+                or "charges" in key_norm
+            ):
                 return int(rng.randint(1_000, 900_000))
             return int(rng.randint(1, 1000))
 
@@ -1990,6 +2014,8 @@ class InstructionServerApp:
         if key_norm == "nom" or key_norm.endswith("_nom") or key_norm.endswith("_noms"):
             return self._known_name_for_path(path, rng=rng, context=context)
         if "date" in key_norm:
+            return self._random_iso_date(rng, 2005, 2026)
+        if key_norm in {"debut", "fin"} and self._path_contains(path, "periode"):
             return self._random_iso_date(rng, 2005, 2026)
         if "residence_fiscale" in key_norm:
             return "France"
@@ -2001,17 +2027,37 @@ class InstructionServerApp:
             return "Loi française"
         if "libelle" in key_norm or "description" in key_norm:
             if self._path_contains(path, "actifs"):
-                return f"Bien {rng.choice(SYNTH_CITIES)}"
+                return rng.choice(
+                    [
+                        f"Maison à {rng.choice(SYNTH_CITIES)}",
+                        f"Appartement à {rng.choice(SYNTH_CITIES)}",
+                        f"Terrain à {rng.choice(SYNTH_CITIES)}",
+                        f"Résidence secondaire à {rng.choice(SYNTH_CITIES)}",
+                        f"Compte bancaire (banque {rng.choice(['BNP', 'SG', 'CA', 'BP'])})",
+                        f"Parts {rng.choice(SYNTH_COMPANIES)}",
+                    ]
+                )
             if self._path_contains(path, "passifs"):
                 return rng.choice(["Emprunt bancaire", "Impôt", "Facture prestataire"])
             if self._path_contains(path, "contrats"):
                 return f"Contrat {rng.choice(SYNTH_INSURERS)}"
-            return "Clause ou élément mentionné"
+            if "contrat_libelle" in key_norm:
+                return f"Contrat {rng.choice(SYNTH_INSURERS)}"
+            # Generic fallback for any other `libelle`/`description` leaf.
+            return rng.choice(
+                [
+                    f"Maison à {rng.choice(SYNTH_CITIES)}",
+                    f"Appartement à {rng.choice(SYNTH_CITIES)}",
+                    f"Bien à {rng.choice(SYNTH_CITIES)}",
+                    f"Parts {rng.choice(SYNTH_COMPANIES)}",
+                ]
+            )
         if "localisation" in key_norm:
             return rng.choice(SYNTH_CITIES)
         if "creancier_nom" in key_norm:
             return rng.choice(["Trésor Public", "Banque Populaire", "URSSAF", "EDF"])
-        return "Information fournie"
+        # Last resort: produce a concrete (but not too specific) string rather than a placeholder.
+        return rng.choice(SYNTH_CITIES)
 
     def _repair_business_integrity(
         self,
@@ -2075,6 +2121,31 @@ class InstructionServerApp:
         defunt["date_deces"] = raw_death.isoformat()
         _harmonize_person(defunt, ref_date=raw_death, default_age=rng.randint(62, 90), min_age=35, max_age=105)
         defunt["est_handicape"] = bool(defunt.get("est_handicape", False))
+
+        # Regime matrimonial coherence: only keep it when the case actually presents a marriage context.
+        regime = defunt.get("regime_matrimonial")
+        if isinstance(regime, dict):
+            if statut in {"CELIBATAIRE", "PACSE", "DIVORCE"}:
+                defunt.pop("regime_matrimonial", None)
+                regime = None
+            else:
+                # If participation subobject is present, force the regime type.
+                if "participation" in regime:
+                    regime["type"] = "PARTICIPATION_AUX_ACQUETS"
+                # If clauses imply a specific regime, make it explicit.
+                regime_type = regime.get("type")
+                if not isinstance(regime_type, str) or not regime_type:
+                    if bool(regime.get("clause_attribution_integrale")):
+                        regime["type"] = "COMMUNAUTE_UNIVERSELLE"
+                    else:
+                        regime["type"] = rng.choice(
+                            [
+                                "COMMUNAUTE_REDUITE_AUX_ACQUETS",
+                                "SEPARATION_DE_BIENS",
+                                "COMMUNAUTE_UNIVERSELLE",
+                                "PARTICIPATION_AUX_ACQUETS",
+                            ]
+                        )
 
         partenaire = famille.get("partenaire")
         if statut in {"MARIE", "PACSE"}:
@@ -2446,6 +2517,11 @@ class InstructionServerApp:
                 )
 
             validation = self._validate_submission(case_text)
+            if re.search(r"\b[a-z]+_[a-z_]+\b", case_text):
+                raise ValueError(
+                    "format invalide: ne pas inclure de clés internes en snake_case dans l'énoncé "
+                    "(ex: statut_matrimonial, option_successorale)"
+                )
             record = {
                 "instruction_id": instruction_id,
                 "agent_id": agent_id or instruction.get("agent_id"),
@@ -2761,6 +2837,7 @@ class InstructionServerApp:
                 "Règle A: chaque information présente dans le TOON doit apparaître dans l'énoncé.",
                 "Règle B: ne pas ajouter de nouvelles informations structurées (noms, dates, montants, liens, biens) absentes du TOON.",
                 "Règle C: ne pas donner la solution juridique, seulement les faits.",
+                "Règle D: ne pas recopier la structure ou les clés du TOON (pas de `snake_case`, pas de `champ: valeur`).",
                 "Sortie attendue: texte brut uniquement (l'énoncé), sans JSON.",
                 "",
                 "TOON:",
@@ -2812,6 +2889,9 @@ class InstructionServerApp:
 
         if len(case_text) < 60:
             warnings.append("énoncé très court")
+
+        if re.search(r"\b[a-z]+_[a-z_]+\b", case_text):
+            warnings.append("le texte contient du 'snake_case' (probable recrachage de schéma)")
 
         return {
             "word_count": len(case_text.split()),
