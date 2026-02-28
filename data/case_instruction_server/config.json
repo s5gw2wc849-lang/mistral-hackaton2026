@@ -1,7 +1,0 @@
-{
-  "seed": 42,
-  "corpus_file": "data/succession_e2e/e2e_cases.jsonl",
-  "created_at": "2026-02-28T13:32:10+00:00",
-  "target_total_cases": 5000,
-  "generation_target": 4839
-}

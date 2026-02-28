@@ -11,6 +11,7 @@ requires-python = ">=3.12"
 dependencies = [
     "accelerate>=1.5.2",
     "bitsandbytes>=0.46.0",
+    "faker>=37.0.0",
     "huggingface-hub>=0.29.0",
     "mistral-common>=1.8.6",
     "peft>=0.14.0",

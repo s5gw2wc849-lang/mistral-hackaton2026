@@ -477,3 +477,172 @@ was built, but also why the direction was chosen.
   - explicit `must_include` and `must_avoid` lists
 - This makes agent generation more reliable and easier to audit during the
   hackathon.
+
+### 15. First paired-generation attempt (full-schema instance)
+
+- We ran a first real paired-generation attempt using:
+  - the local instruction server in pair mode
+  - a delegated agent
+  - the full extraction schema at
+    `../w5/glinerExtract/schema/schema.full.json`
+- The first attempt failed in a predictable way:
+  - the schema is large and custom (not standard JSON Schema)
+  - the agent spent too much time exploring the schema structure instead of
+    generating the pair
+  - the interruption happened before a usable `case_text + target_json` object
+    was returned
+- This failure was informative rather than wasted:
+  - it confirmed that directly asking an agent to both parse a large custom
+    schema and fill a full instance in one pass is too expensive and too slow
+  - it also confirmed that we need a preprocessed representation of the schema
+    for generation
+- A mitigation was added immediately:
+  - we generated a full instance template from the schema where:
+    - scalar leaves are replaced by `null`
+    - list leaves are replaced by `[]`
+  - this template is stored at:
+    `data/case_instruction_server/schema_instance_template.full.json`
+- Key conclusion from this attempt:
+  - the next attempts should not start from the raw descriptive schema
+  - they should start from either:
+    - a prebuilt instance template, or
+    - a sparse-output rule set where only present fields are emitted
+
+### 16. Sparse pair generation adopted and first batch completed
+
+- We switched to a strict sparse-output policy for `target_json`:
+  - full schema remains the source of truth for allowed keys
+  - only fields supported by the case are emitted
+  - no `null`, no empty arrays, no empty objects
+- This significantly reduced generation friction for large-schema extraction.
+- We then completed and stored four additional paired samples:
+  - `INS-0003`
+  - `INS-0004`
+  - `INS-0005`
+  - `INS-0006`
+- Current local generation status after this batch:
+  - submitted paired samples: `5` total
+  - issued instructions: `6`
+
+### 17. Storage contract switched to `case_text + target_toon` only
+
+- We aligned the instruction server storage contract with the TOON-first pipeline:
+  - submission now requires `target_toon`
+  - legacy `target_json` is no longer accepted as target payload
+  - training exports write assistant output as TOON text
+- A startup sanitization pass was added to prevent legacy drift:
+  - remove any `target_json` key from submitted rows
+  - drop legacy submitted rows that do not contain a valid non-empty `target_toon`
+  - migrate old issued instruction metadata (`required_keys`, submission contract, prompt token) from `target_json` to `target_toon`
+  - delete stale legacy `_last_instruction.json` when it still contains `target_json`
+- Net result for ongoing generation:
+  - stored pair payload is constrained to `case_text` and `target_toon` (plus metadata)
+  - no JSON target object is persisted as training target
+
+### 18. Target-first generation strategy adopted (TOON-first)
+
+- We formally switched from "text-first" to "target-first" generation:
+  - server generates a constrained structured target internally
+  - target is encoded as TOON and sent to the agent
+  - agent generates only `case_text` from that target
+  - submission is validated and stored as `{case_text, target_toon}`
+- Why this was chosen:
+  - lowers label drift risk
+  - makes business constraints enforceable before text generation
+  - enables iterative tightening of domain rules without changing storage format
+
+### 19. Dedicated endpoint added for TOON-first flow
+
+- Added endpoint:
+  - `GET/POST /next-target`
+- Behavior:
+  - emits standard instruction dimensions
+  - includes server-generated `target_toon`
+  - returns a text-only generation prompt aligned with that target
+- Submission behavior update:
+  - `POST /submit-case` now accepts target omission when instruction carries server-generated `target_toon`
+  - if a payload target is provided for a target-first instruction, it must exactly match the locked server target
+  - mismatch is rejected
+
+### 20. Simplified TOON-first API iteration
+
+- We simplified the API flow after team feedback:
+  - keep a single instruction endpoint (`/next-instruction`)
+  - do not return `target_toon` in the public response
+  - require submit payload to contain only `instruction_id` + `case_text` (plus optional `agent_id`)
+- Internal behavior:
+  - `/next-instruction` now generates and stores a hidden server-side TOON target (`server_target_toon`) per instruction
+  - `/submit-case` resolves that hidden target, validates text/target coherence, and stores `{case_text, target_toon}`
+  - client-provided `target_toon` is now rejected in submit payloads
+- Rationale:
+  - less client complexity
+  - lower leak/copy risk on target payloads
+  - easier business-constraint iteration while preserving training pair quality
+
+### 21. Schema-driven target generator hardening
+
+- We upgraded the hidden target generator to be anchored to the master schema:
+  - master schema path is now configurable (`--master-schema-file`)
+  - default points to `../w5/glinerExtract/schema/schema.full.json`
+- Generation now follows a constrained pipeline:
+  - sample instruction dimensions
+  - generate sparse candidate target
+  - validate strict sparse rules (no null, no empty object/list)
+  - validate type/enum/path compliance against `schema.full.json`
+  - apply business coherence checks before TOON encoding
+- Submit flow remains text-only:
+  - client sends only `instruction_id` + `case_text`
+  - server resolves hidden `server_target_toon` and validates text/target coherence
+
+### 22. Step-by-step business-safe generation (no incoherent targets)
+
+- We replaced the previous monolithic target fill with a staged generation flow:
+  - Step 1: identity/legal core (`famille.defunt`, partner linkage)
+  - Step 2: topic blocks selected from schema prefixes
+  - Step 3: business integrity repair pass (date/age/status/link consistency)
+  - Step 4: strict validation (sparse + business + full schema)
+- The generator is now explicitely **schema-driven** (not heuristic-only):
+  - source of truth: `../w5/glinerExtract/schema/schema.full.json`
+  - only allowed leaves are emitted
+  - output is sparse by contract (`no null`, `no empty object`, `no empty list`)
+
+Quality checks run after the update:
+
+- `python -m py_compile src/ministral_ft/case_instruction_server.py` passed
+- End-to-end server smoke (`next_instruction`) passed on multiple cases
+- Offline simulation (500 instructions, 50 retries max each):
+  - generation failures: `0`
+  - unique leaf coverage: `398 / 398` (`100%` of schema leaves)
+  - complexity mix remained aligned with configured quotas (`20/40/24/16`)
+- Coherence spot checks (defunt age/date consistency) passed on sampled outputs.
+
+Implication for the pipeline:
+
+- TOON targets are now generated step-by-step with business constraints first
+- agents only need to produce `case_text`
+- stored training pair remains `{ case_text, target_toon }`
+
+### 23. Final API contract (agent receives TOON)
+
+We iterated on the API contract after user feedback and clarified the final rule:
+
+- `/next-instruction` returns a minimal instruction payload for agents:
+  - `instruction_id`
+  - `target_toon`
+  - `prompt` (TOON -> French free-form case text, no JSON)
+- `/submit-case` remains text-only:
+  - accepts `{ instruction_id, case_text }` (+ optional `agent_id`)
+  - rejects any client-provided `target_toon` (server is source of truth)
+
+Important business-side integrity guard:
+
+- Topic quotas are now enforced on the TOON itself:
+  - if the drawn topic is `assurance_vie`, the emitted TOON contains an insurance contract block, etc.
+  - generation is rejected/retried if topic <-> TOON alignment fails
+
+Smoke tests executed (temporary state dir, HTTP end-to-end):
+
+- `/health` ok
+- `/next-instruction` with forced `topic=assurance_vie` returned a TOON that decodes and includes `assurance_vie.contrats`
+- `/submit-case` rejected payloads containing `target_toon` and accepted a `case_text` containing all extracted `*_nom(s)`
+- `/dashboard` reflected `issued=1` / `submitted=1`

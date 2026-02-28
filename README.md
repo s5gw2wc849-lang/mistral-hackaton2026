@@ -117,6 +117,7 @@ Par défaut :
 - hôte : `127.0.0.1`
 - port : `8765`
 - état persistant : `data/case_instruction_server/`
+- schéma maître : `../w5/glinerExtract/schema/schema.full.json`
 - cible totale : `5000` cas d'entraînement
 - objectif de génération : calculé automatiquement (`cible totale - corpus seed`)
 
@@ -151,6 +152,35 @@ curl -s \
   http://127.0.0.1:8765/submit-case
 ```
 
+Mode TOON-first (recommandé) :
+
+```bash
+curl -s \
+  -H 'Content-Type: application/json' \
+  -d '{"agent_id":"agent-01"}' \
+  http://127.0.0.1:8765/next-instruction
+```
+
+Le serveur renvoie une instruction minimaliste contenant :
+- `instruction_id`
+- `target_toon` (TOON sparse schema-driven)
+- `prompt` (consigne "TOON -> énoncé")
+
+L'agent soumet uniquement `case_text` + `instruction_id` :
+
+```bash
+curl -s \
+  -H 'Content-Type: application/json' \
+  -d '{"instruction_id":"INS-0001","agent_id":"agent-01","case_text":"..."}' \
+  http://127.0.0.1:8765/submit-case
+```
+
+Le `target_toon` interne est généré en mode schema-driven :
+- validation stricte des chemins/types/enums contre `schema.full.json`
+- sortie sparse stricte (pas de `null`, pas d'objet/liste vide)
+- contraintes d'intégrité métier minimales (cohérence statut/lien, présence d'éléments attendus selon le thème)
+- alignement strict topic <-> contenu du TOON (si le sujet est `assurance_vie`, le TOON contient bien une assurance-vie, etc.)
+
 À chaque émission ou soumission, le serveur met à jour :
 - `issued_instructions.jsonl`
 - `generated_cases.jsonl`
@@ -160,6 +190,8 @@ curl -s \
 - `summary.md`
 - un fichier par instruction dans `instructions/`
 - un fichier par soumission dans `submissions/`
+
+Note : `data/case_instruction_server/` est un dossier de runtime (état et exports) et est gitignoré.
 
 ## Notes
 
