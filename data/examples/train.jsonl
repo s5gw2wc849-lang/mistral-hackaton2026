@@ -1,0 +1,3 @@
+{"prompt":"SYSTEM: Tu es un assistant de support B2B.\nUSER: Reformule ce message en plus professionnel.\nASSISTANT:","response":"Bonjour, je vous confirme que votre demande a bien ete prise en charge et qu'un retour vous sera transmis dans la journee."}
+{"messages":[{"role":"system","content":"Reponds en francais, de maniere concise."},{"role":"user","content":"Propose un titre de newsletter sur l'automatisation commerciale."},{"role":"assistant","content":"Automatisation commerciale : 5 gains concrets des la premiere semaine"}]}
+{"text":"USER: Donne trois avantages de l'automatisation du support.\nASSISTANT: 1. Temps de reponse plus court. 2. Qualite plus homogene. 3. Meilleure priorisation des tickets."}

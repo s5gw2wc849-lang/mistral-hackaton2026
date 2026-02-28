@@ -1,0 +1,2 @@
+{"prompt":"USER: Resume ce point projet en une phrase.\nASSISTANT:","response":"Le chantier avance comme prevu, avec une livraison du prototype en fin de semaine."}
+{"messages":[{"role":"system","content":"Style direct, ton expert."},{"role":"user","content":"Explique pourquoi un adapter LoRA reduit le cout de fine-tuning."},{"role":"assistant","content":"LoRA n'optimise qu'un petit nombre de poids additionnels, ce qui reduit fortement la memoire, le temps d'entrainement et le stockage final."}]}

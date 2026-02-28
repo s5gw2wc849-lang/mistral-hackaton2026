@@ -1,0 +1,393 @@
+{
+  "target_total_cases": 5000,
+  "generation_target": 4839,
+  "seed_cases": 161,
+  "issued": 0,
+  "submitted": 0,
+  "training_cases_current": 161,
+  "remaining": 4839,
+  "dimensions": {
+    "persona": {
+      "enfant": {
+        "target_share": 0.18,
+        "target_count": 871.0,
+        "current": 0,
+        "gap": 871.0
+      },
+      "conjoint": {
+        "target_share": 0.12,
+        "target_count": 580.7,
+        "current": 0,
+        "gap": 580.7
+      },
+      "beau_enfant": {
+        "target_share": 0.09,
+        "target_count": 435.5,
+        "current": 0,
+        "gap": 435.5
+      },
+      "fratrie": {
+        "target_share": 0.08,
+        "target_count": 387.1,
+        "current": 0,
+        "gap": 387.1
+      },
+      "notaire": {
+        "target_share": 0.08,
+        "target_count": 387.1,
+        "current": 0,
+        "gap": 387.1
+      },
+      "avocat": {
+        "target_share": 0.07,
+        "target_count": 338.7,
+        "current": 0,
+        "gap": 338.7
+      },
+      "partenaire_pacs": {
+        "target_share": 0.07,
+        "target_count": 338.7,
+        "current": 0,
+        "gap": 338.7
+      },
+      "concubin": {
+        "target_share": 0.06,
+        "target_count": 290.3,
+        "current": 0,
+        "gap": 290.3
+      },
+      "associe": {
+        "target_share": 0.07,
+        "target_count": 338.7,
+        "current": 0,
+        "gap": 338.7
+      },
+      "petit_enfant": {
+        "target_share": 0.05,
+        "target_count": 242.0,
+        "current": 0,
+        "gap": 242.0
+      },
+      "tiers": {
+        "target_share": 0.05,
+        "target_count": 242.0,
+        "current": 0,
+        "gap": 242.0
+      },
+      "narrateur_neutre": {
+        "target_share": 0.08,
+        "target_count": 387.1,
+        "current": 0,
+        "gap": 387.1
+      }
+    },
+    "voice": {
+      "premiere_personne": {
+        "target_share": 0.45,
+        "target_count": 2177.6,
+        "current": 0,
+        "gap": 2177.6
+      },
+      "troisieme_personne": {
+        "target_share": 0.35,
+        "target_count": 1693.6,
+        "current": 0,
+        "gap": 1693.6
+      },
+      "note_dossier": {
+        "target_share": 0.1,
+        "target_count": 483.9,
+        "current": 0,
+        "gap": 483.9
+      },
+      "parole_rapportee": {
+        "target_share": 0.1,
+        "target_count": 483.9,
+        "current": 0,
+        "gap": 483.9
+      }
+    },
+    "format": {
+      "question_directe": {
+        "target_share": 0.22,
+        "target_count": 1064.6,
+        "current": 0,
+        "gap": 1064.6
+      },
+      "mail_brouillon": {
+        "target_share": 0.18,
+        "target_count": 871.0,
+        "current": 0,
+        "gap": 871.0
+      },
+      "recit_libre": {
+        "target_share": 0.22,
+        "target_count": 1064.6,
+        "current": 0,
+        "gap": 1064.6
+      },
+      "note_professionnelle": {
+        "target_share": 0.14,
+        "target_count": 677.5,
+        "current": 0,
+        "gap": 677.5
+      },
+      "oral_retranscrit": {
+        "target_share": 0.14,
+        "target_count": 677.5,
+        "current": 0,
+        "gap": 677.5
+      },
+      "message_conflictuel": {
+        "target_share": 0.1,
+        "target_count": 483.9,
+        "current": 0,
+        "gap": 483.9
+      }
+    },
+    "length_band": {
+      "court": {
+        "target_share": 0.18,
+        "target_count": 871.0,
+        "current": 0,
+        "gap": 871.0
+      },
+      "moyen": {
+        "target_share": 0.42,
+        "target_count": 2032.4,
+        "current": 0,
+        "gap": 2032.4
+      },
+      "long": {
+        "target_share": 0.32,
+        "target_count": 1548.5,
+        "current": 0,
+        "gap": 1548.5
+      },
+      "tres_long": {
+        "target_share": 0.08,
+        "target_count": 387.1,
+        "current": 0,
+        "gap": 387.1
+      }
+    },
+    "noise": {
+      "propre": {
+        "target_share": 0.42,
+        "target_count": 2032.4,
+        "current": 0,
+        "gap": 2032.4
+      },
+      "legeres_fautes": {
+        "target_share": 0.22,
+        "target_count": 1064.6,
+        "current": 0,
+        "gap": 1064.6
+      },
+      "fautes_et_abreviations": {
+        "target_share": 0.17,
+        "target_count": 822.6,
+        "current": 0,
+        "gap": 822.6
+      },
+      "ambigu": {
+        "target_share": 0.16,
+        "target_count": 774.2,
+        "current": 0,
+        "gap": 774.2
+      },
+      "tres_brouillon": {
+        "target_share": 0.03,
+        "target_count": 145.2,
+        "current": 0,
+        "gap": 145.2
+      }
+    },
+    "numeric_density": {
+      "sans_montant": {
+        "target_share": 0.06,
+        "target_count": 290.3,
+        "current": 0,
+        "gap": 290.3
+      },
+      "un_montant": {
+        "target_share": 0.26,
+        "target_count": 1258.1,
+        "current": 0,
+        "gap": 1258.1
+      },
+      "plusieurs_montants": {
+        "target_share": 0.38,
+        "target_count": 1838.8,
+        "current": 0,
+        "gap": 1838.8
+      },
+      "montants_et_dates": {
+        "target_share": 0.3,
+        "target_count": 1451.7,
+        "current": 0,
+        "gap": 1451.7
+      }
+    },
+    "date_precision": {
+      "aucune": {
+        "target_share": 0.15,
+        "target_count": 725.9,
+        "current": 0,
+        "gap": 725.9
+      },
+      "approx": {
+        "target_share": 0.2,
+        "target_count": 967.8,
+        "current": 0,
+        "gap": 967.8
+      },
+      "exacte": {
+        "target_share": 0.65,
+        "target_count": 3145.3,
+        "current": 0,
+        "gap": 3145.3
+      }
+    },
+    "complexity": {
+      "simple": {
+        "target_share": 0.2,
+        "target_count": 967.8,
+        "current": 0,
+        "gap": 967.8
+      },
+      "intermediaire": {
+        "target_share": 0.4,
+        "target_count": 1935.6,
+        "current": 0,
+        "gap": 1935.6
+      },
+      "complexe": {
+        "target_share": 0.24,
+        "target_count": 1161.4,
+        "current": 0,
+        "gap": 1161.4
+      },
+      "hard_negative": {
+        "target_share": 0.16,
+        "target_count": 774.2,
+        "current": 0,
+        "gap": 774.2
+      }
+    },
+    "primary_topic": {
+      "ordre_heritiers": {
+        "target_share": 0.08,
+        "target_count": 387.1,
+        "current": 0,
+        "gap": 387.1
+      },
+      "famille_recomposee": {
+        "target_share": 0.12,
+        "target_count": 580.7,
+        "current": 0,
+        "gap": 580.7
+      },
+      "regimes_matrimoniaux": {
+        "target_share": 0.08,
+        "target_count": 387.1,
+        "current": 0,
+        "gap": 387.1
+      },
+      "donations_reduction": {
+        "target_share": 0.1,
+        "target_count": 483.9,
+        "current": 0,
+        "gap": 483.9
+      },
+      "assurance_vie": {
+        "target_share": 0.1,
+        "target_count": 483.9,
+        "current": 0,
+        "gap": 483.9
+      },
+      "indivision_partage": {
+        "target_share": 0.09,
+        "target_count": 435.5,
+        "current": 0,
+        "gap": 435.5
+      },
+      "entreprise_dutreil": {
+        "target_share": 0.08,
+        "target_count": 387.1,
+        "current": 0,
+        "gap": 387.1
+      },
+      "demembrement_usufruit": {
+        "target_share": 0.06,
+        "target_count": 290.3,
+        "current": 0,
+        "gap": 290.3
+      },
+      "testament_legs": {
+        "target_share": 0.08,
+        "target_count": 387.1,
+        "current": 0,
+        "gap": 387.1
+      },
+      "dettes_passif": {
+        "target_share": 0.06,
+        "target_count": 290.3,
+        "current": 0,
+        "gap": 290.3
+      },
+      "pacs_concubinage": {
+        "target_share": 0.07,
+        "target_count": 338.7,
+        "current": 0,
+        "gap": 338.7
+      },
+      "international_procedure": {
+        "target_share": 0.08,
+        "target_count": 387.1,
+        "current": 0,
+        "gap": 387.1
+      }
+    },
+    "hard_negative_mode": {
+      "pas_de_deces_clair": {
+        "target_share": 0.3,
+        "target_count": 232.3,
+        "current": 0,
+        "gap": 232.3
+      },
+      "infos_incompletes": {
+        "target_share": 0.3,
+        "target_count": 232.3,
+        "current": 0,
+        "gap": 232.3
+      },
+      "faits_contradictoires": {
+        "target_share": 0.25,
+        "target_count": 193.6,
+        "current": 0,
+        "gap": 193.6
+      },
+      "hors_perimetre_mal_qualifie": {
+        "target_share": 0.15,
+        "target_count": 116.1,
+        "current": 0,
+        "gap": 116.1
+      }
+    },
+    "hard_negative_intensity": {
+      "soft": {
+        "target_share": 0.8,
+        "target_count": 619.4,
+        "current": 0,
+        "gap": 619.4
+      },
+      "hard": {
+        "target_share": 0.2,
+        "target_count": 154.8,
+        "current": 0,
+        "gap": 154.8
+      }
+    }
+  }
+}
