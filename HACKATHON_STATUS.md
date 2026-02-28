@@ -464,3 +464,16 @@ was built, but also why the direction was chosen.
   - fine-tune `ministral-3b-latest` on the resulting pairs
 - This creates a strong first path toward a domain-specialized student model
   without needing local GPU infrastructure.
+
+### 14. Instruction server payload refinement
+
+- The synthetic instruction server was upgraded so each emitted instruction is
+  more usable by delegated agents.
+- Instructions now include:
+  - a compact executable prompt
+  - a `dimension_guide` explaining each selected axis
+  - the allowed values for every axis
+  - a `style_brief`
+  - explicit `must_include` and `must_avoid` lists
+- This makes agent generation more reliable and easier to audit during the
+  hackathon.

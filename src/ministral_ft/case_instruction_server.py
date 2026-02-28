@@ -179,6 +179,132 @@ HARD_NEGATIVE_INTENSITY_LABELS = {
     "soft": "hard negative léger, très proche d'un vrai cas",
     "hard": "hard negative dur, plus piégeux et plus bruité",
 }
+DIMENSION_PURPOSES = {
+    "persona": (
+        "Définit qui parle ou depuis quel point de vue social / familial / professionnel "
+        "le cas est raconté. Cela change le biais du narrateur, son niveau d'information "
+        "et le vocabulaire attendu."
+    ),
+    "voice": (
+        "Définit la posture narrative et la grammaire du récit. Cela change la distance "
+        "émotionnelle, la clarté et la manière d'exposer les faits."
+    ),
+    "format": (
+        "Définit la forme matérielle du texte. Cela évite que tous les cas ressemblent "
+        "à des énoncés scolaires homogènes."
+    ),
+    "length_band": (
+        "Définit la profondeur factuelle attendue. Cela contrôle la quantité de détails "
+        "et la densité d'information à inclure."
+    ),
+    "noise": (
+        "Définit le niveau de bruit linguistique. Cela simule des entrées plus ou moins "
+        "propres, plus ou moins réalistes côté utilisateur."
+    ),
+    "numeric_density": (
+        "Définit la quantité de chiffres, montants, proportions ou valorisations à faire "
+        "apparaître dans le cas."
+    ),
+    "date_precision": (
+        "Définit le niveau de précision temporelle attendu, afin de varier entre absence "
+        "de date, repères flous et dates réellement exploitables."
+    ),
+    "complexity": (
+        "Définit la difficulté globale du dossier. Cela contrôle le nombre de couches "
+        "juridiques, de tensions factuelles et la part de cas piégeux."
+    ),
+    "primary_topic": (
+        "Définit le coeur juridique du cas. C'est la matière principale qui doit structurer "
+        "l'énoncé."
+    ),
+    "secondary_topic": (
+        "Ajoute une seconde couche facultative au dossier pour éviter les cas trop plats. "
+        "Le sujet secondaire complique ou enrichit le sujet principal."
+    ),
+    "hard_negative_mode": (
+        "Définit la nature du piège lorsque le cas est volontairement un hard negative. "
+        "Ce champ reste inactif si la complexité n'est pas hard negative."
+    ),
+    "hard_negative_intensity": (
+        "Dose la violence du piège sur les hard negatives. Ce champ reste inactif si la "
+        "complexité n'est pas hard negative."
+    ),
+}
+PERSONA_DETAILS = {
+    "enfant": "Le narrateur connaît souvent bien les faits, mais il peut être émotionnel ou partiel.",
+    "conjoint": "Le narrateur met souvent en avant sa protection, ses droits et le patrimoine de couple.",
+    "beau_enfant": "Le narrateur est souvent dans un angle conflictuel ou comparatif avec les autres branches.",
+    "fratrie": "Le narrateur parle souvent de collatéraux, de tensions familiales et d'égalité entre proches.",
+    "notaire": "Le ton attendu est plus sec, structuré et factuel, avec un prisme de dossier.",
+    "avocat": "Le ton attendu met davantage l'accent sur le litige, la contestation et les points sensibles.",
+    "partenaire_pacs": "Le narrateur met souvent l'accent sur la protection insuffisante ou incertaine du survivant.",
+    "concubin": "Le narrateur est souvent dans une situation fragile, mal protégée ou mal comprise.",
+    "associe": "Le narrateur met souvent en avant la copropriété, la gestion ou la valeur d'un actif partagé.",
+    "petit_enfant": "Le narrateur fait souvent apparaître la représentation, une branche familiale ou un décalage générationnel.",
+    "tiers": "Le narrateur est utile pour introduire de l'imprécision ou une compréhension partielle des faits.",
+    "narrateur_neutre": "Le narrateur expose les faits sans implication personnelle directe, de façon plus neutre.",
+}
+VOICE_DETAILS = {
+    "premiere_personne": "Le texte doit ressembler à une personne qui expose sa propre situation.",
+    "troisieme_personne": "Le texte doit ressembler à une présentation extérieure d'un dossier ou d'un cas d'espèce.",
+    "note_dossier": "Le texte doit ressembler à une note interne ou une fiche de dossier.",
+    "parole_rapportee": "Le texte doit donner l'impression que les faits sont rapportés, transmis ou reformulés.",
+}
+FORMAT_DETAILS = {
+    "question_directe": "Le cas doit se terminer comme une vraie demande adressée à un professionnel.",
+    "mail_brouillon": "Le cas doit ressembler à un message envoyé vite, imparfait mais exploitable.",
+    "recit_libre": "Le cas doit dérouler les faits sans plan apparent ni structure scolaire.",
+    "note_professionnelle": "Le cas doit avoir une forme sèche, quasi cabinet, quasi-notaire.",
+    "oral_retranscrit": "Le cas doit garder une cadence parlée, avec une ponctuation un peu irrégulière.",
+    "message_conflictuel": "Le cas doit laisser sentir une tension explicite ou un désaccord familial.",
+}
+LENGTH_DETAILS = {
+    "court": "Le cas doit rester bref mais contenir l'essentiel sans tomber dans le télégraphique.",
+    "moyen": "Le cas doit tenir dans un bloc lisible avec un bon niveau de matière.",
+    "long": "Le cas doit être nettement développé avec plusieurs informations utiles.",
+    "tres_long": "Le cas doit ressembler à un mini-dossier riche, sans basculer dans l'analyse.",
+}
+NOISE_DETAILS = {
+    "propre": "Le texte peut être très propre, avec peu ou pas de défaut volontaire.",
+    "legeres_fautes": "Le texte peut contenir 1 ou 2 fautes crédibles, pas davantage.",
+    "fautes_et_abreviations": "Le texte doit garder une bonne lisibilité tout en injectant des abréviations réalistes.",
+    "ambigu": "Le texte doit comporter au moins une zone d'ombre, un point mal posé ou discutable.",
+    "tres_brouillon": "Le texte peut être haché, hésitant ou mal ponctué, mais il doit rester compréhensible.",
+}
+NUMERIC_DETAILS = {
+    "sans_montant": "Les chiffres ne sont pas obligatoires si le cas reste crédible sans eux.",
+    "un_montant": "Il faut au moins une valeur ou un ordre de grandeur exploitable.",
+    "plusieurs_montants": "Il faut plusieurs chiffres utiles pour enrichir le dossier.",
+    "montants_et_dates": "Il faut au moins un montant et une date utile, de préférence bien exploitable.",
+}
+DATE_PRECISION_DETAILS = {
+    "aucune": "Aucune date n'est imposée si cela ne sert pas le cas.",
+    "approx": "Les repères temporels peuvent rester flous, relatifs ou approximatifs.",
+    "exacte": "Au moins une date doit être réellement exploitable (jour/mois/année ou ISO).",
+}
+COMPLEXITY_DETAILS = {
+    "simple": "Le cas doit rester lisible, direct et peu imbriqué.",
+    "intermediaire": "Le cas doit comporter quelques couches factuelles mais rester assez standard.",
+    "complexe": "Le cas doit cumuler plusieurs éléments ou tensions sans devenir confus.",
+    "hard_negative": "Le cas doit volontairement piéger un extracteur ou un lecteur trop confiant.",
+}
+HARD_NEGATIVE_MODE_DETAILS = {
+    "pas_de_deces_clair": "Le texte doit ressembler à une succession sans poser clairement un décès exploitable.",
+    "infos_incompletes": "Une donnée pivot doit manquer, empêchant une lecture trop simple du cas.",
+    "faits_contradictoires": "Une contradiction réaliste doit être présente sans être explicitement résolue.",
+    "hors_perimetre_mal_qualifie": "Le texte doit sembler successoral alors qu'une partie du problème relève d'autre chose.",
+}
+HARD_NEGATIVE_INTENSITY_DETAILS = {
+    "soft": "Un seul défaut majeur suffit, le cas doit rester très crédible au premier regard.",
+    "hard": "Le cas doit cumuler plusieurs confusions tout en restant plausible.",
+}
+COMMON_MUST_AVOID = [
+    "Ne pas donner la solution ni conclure sur les droits exacts.",
+    "Ne pas fournir d'analyse juridique, de calcul ou de raisonnement explicatif.",
+    "Ne pas répondre en liste de points juridiques ou en checklist.",
+    "Ne pas recopier mot pour mot les exemples de référence.",
+    "Ne pas répondre en JSON ni dans un format structuré artificiel.",
+]
 TOPIC_TEMPLATES: dict[str, dict[str, Any]] = {
     "ordre_heritiers": {
         "label": "ordre des héritiers / dévolution",
@@ -473,6 +599,217 @@ class InstructionServerApp:
         self._refresh_training_exports()
         self._refresh_summary()
 
+    def _collect_mandatory_elements(self, dimensions: dict[str, str | None]) -> list[str]:
+        primary_topic = str(dimensions["primary_topic"])
+        secondary_topic = dimensions.get("secondary_topic")
+        hard_negative_mode = dimensions.get("hard_negative_mode")
+        hard_negative_intensity = dimensions.get("hard_negative_intensity")
+
+        mandatory_elements: list[str] = []
+        mandatory_elements.extend(TOPIC_TEMPLATES[primary_topic]["elements"])
+        if isinstance(secondary_topic, str) and secondary_topic:
+            mandatory_elements.extend(TOPIC_TEMPLATES[secondary_topic]["elements"])
+        mandatory_elements.extend(FORMAT_REQUIREMENTS[str(dimensions["format"])])
+        mandatory_elements.extend(LENGTH_REQUIREMENTS[str(dimensions["length_band"])])
+        mandatory_elements.extend(NOISE_REQUIREMENTS[str(dimensions["noise"])])
+        mandatory_elements.extend(NUMERIC_REQUIREMENTS[str(dimensions["numeric_density"])])
+        mandatory_elements.extend(DATE_PRECISION_REQUIREMENTS[str(dimensions["date_precision"])])
+        if isinstance(hard_negative_mode, str) and hard_negative_mode:
+            mandatory_elements.extend(HARD_NEGATIVE_REQUIREMENTS[hard_negative_mode])
+        if isinstance(hard_negative_intensity, str) and hard_negative_intensity:
+            mandatory_elements.extend(HARD_NEGATIVE_INTENSITY_REQUIREMENTS[hard_negative_intensity])
+
+        deduped_elements: list[str] = []
+        seen = set()
+        for item in mandatory_elements:
+            if item in seen:
+                continue
+            seen.add(item)
+            deduped_elements.append(item)
+        return deduped_elements
+
+    def _collect_must_avoid(self, dimensions: dict[str, str | None]) -> list[str]:
+        items = list(COMMON_MUST_AVOID)
+        if str(dimensions["complexity"]) == "hard_negative":
+            items.append("Ne pas signaler explicitement qu'il s'agit d'un hard negative ou d'un piège.")
+        return items
+
+    def _build_style_brief(self, dimensions: dict[str, str | None]) -> str:
+        persona = str(dimensions["persona"])
+        voice = str(dimensions["voice"])
+        format_name = str(dimensions["format"])
+        primary_topic = str(dimensions["primary_topic"])
+        secondary_topic = dimensions.get("secondary_topic")
+        secondary_label = (
+            TOPIC_TEMPLATES[secondary_topic]["label"]
+            if isinstance(secondary_topic, str) and secondary_topic
+            else None
+        )
+
+        parts = [
+            f"Le cas doit être raconté comme si {PERSONA_LABELS[persona]} s'exprimait.",
+            f"La tournure attendue est {VOICE_LABELS[voice]}.",
+            f"La forme doit ressembler à {FORMAT_LABELS[format_name]}.",
+            f"Le coeur juridique doit tourner autour de {TOPIC_TEMPLATES[primary_topic]['label']}.",
+        ]
+        if secondary_label:
+            parts.append(f"Une seconde couche doit faire intervenir {secondary_label}.")
+        return " ".join(parts)
+
+    def _build_dimension_guide(self, dimensions: dict[str, str | None]) -> dict[str, dict[str, Any]]:
+        topic_allowed = {
+            key: value["label"]
+            for key, value in TOPIC_TEMPLATES.items()
+        }
+
+        def _axis_payload(
+            *,
+            key: str,
+            selected: str | None,
+            selected_label: str | None,
+            selected_effect: str,
+            allowed_values: dict[str, str],
+            only_when: str | None = None,
+        ) -> dict[str, Any]:
+            return {
+                "selected_value": selected,
+                "selected_label": selected_label,
+                "purpose": DIMENSION_PURPOSES[key],
+                "selected_effect": selected_effect,
+                "allowed_values": allowed_values,
+                "only_active_when": only_when,
+            }
+
+        primary_topic = str(dimensions["primary_topic"])
+        secondary_topic = dimensions.get("secondary_topic")
+        hard_negative_mode = dimensions.get("hard_negative_mode")
+        hard_negative_intensity = dimensions.get("hard_negative_intensity")
+
+        secondary_selected_effect = (
+            "Aucune couche secondaire n'est imposée sur cette consigne."
+            if not isinstance(secondary_topic, str) or not secondary_topic
+            else (
+                "Cette couche ajoute une contrainte supplémentaire : "
+                + " ; ".join(TOPIC_TEMPLATES[secondary_topic]["elements"])
+            )
+        )
+        hard_negative_mode_effect = (
+            "Inactif ici, car la complexité tirée n'est pas un hard negative."
+            if not isinstance(hard_negative_mode, str) or not hard_negative_mode
+            else HARD_NEGATIVE_MODE_DETAILS[hard_negative_mode]
+        )
+        hard_negative_intensity_effect = (
+            "Inactif ici, car la complexité tirée n'est pas un hard negative."
+            if not isinstance(hard_negative_intensity, str) or not hard_negative_intensity
+            else HARD_NEGATIVE_INTENSITY_DETAILS[hard_negative_intensity]
+        )
+
+        return {
+            "persona": _axis_payload(
+                key="persona",
+                selected=str(dimensions["persona"]),
+                selected_label=PERSONA_LABELS[str(dimensions["persona"])],
+                selected_effect=PERSONA_DETAILS[str(dimensions["persona"])],
+                allowed_values=PERSONA_LABELS,
+            ),
+            "voice": _axis_payload(
+                key="voice",
+                selected=str(dimensions["voice"]),
+                selected_label=VOICE_LABELS[str(dimensions["voice"])],
+                selected_effect=VOICE_DETAILS[str(dimensions["voice"])],
+                allowed_values=VOICE_LABELS,
+            ),
+            "format": _axis_payload(
+                key="format",
+                selected=str(dimensions["format"]),
+                selected_label=FORMAT_LABELS[str(dimensions["format"])],
+                selected_effect=FORMAT_DETAILS[str(dimensions["format"])],
+                allowed_values=FORMAT_LABELS,
+            ),
+            "length_band": _axis_payload(
+                key="length_band",
+                selected=str(dimensions["length_band"]),
+                selected_label=LENGTH_LABELS[str(dimensions["length_band"])],
+                selected_effect=LENGTH_DETAILS[str(dimensions["length_band"])],
+                allowed_values=LENGTH_LABELS,
+            ),
+            "noise": _axis_payload(
+                key="noise",
+                selected=str(dimensions["noise"]),
+                selected_label=NOISE_LABELS[str(dimensions["noise"])],
+                selected_effect=NOISE_DETAILS[str(dimensions["noise"])],
+                allowed_values=NOISE_LABELS,
+            ),
+            "numeric_density": _axis_payload(
+                key="numeric_density",
+                selected=str(dimensions["numeric_density"]),
+                selected_label=NUMERIC_LABELS[str(dimensions["numeric_density"])],
+                selected_effect=NUMERIC_DETAILS[str(dimensions["numeric_density"])],
+                allowed_values=NUMERIC_LABELS,
+            ),
+            "date_precision": _axis_payload(
+                key="date_precision",
+                selected=str(dimensions["date_precision"]),
+                selected_label=DATE_PRECISION_LABELS[str(dimensions["date_precision"])],
+                selected_effect=DATE_PRECISION_DETAILS[str(dimensions["date_precision"])],
+                allowed_values=DATE_PRECISION_LABELS,
+            ),
+            "complexity": _axis_payload(
+                key="complexity",
+                selected=str(dimensions["complexity"]),
+                selected_label=COMPLEXITY_LABELS[str(dimensions["complexity"])],
+                selected_effect=COMPLEXITY_DETAILS[str(dimensions["complexity"])],
+                allowed_values=COMPLEXITY_LABELS,
+            ),
+            "primary_topic": _axis_payload(
+                key="primary_topic",
+                selected=primary_topic,
+                selected_label=TOPIC_TEMPLATES[primary_topic]["label"],
+                selected_effect="Cette matière doit structurer le cas. Exigences métier : "
+                + " ; ".join(TOPIC_TEMPLATES[primary_topic]["elements"]),
+                allowed_values=topic_allowed,
+            ),
+            "secondary_topic": _axis_payload(
+                key="secondary_topic",
+                selected=secondary_topic if isinstance(secondary_topic, str) and secondary_topic else None,
+                selected_label=(
+                    TOPIC_TEMPLATES[secondary_topic]["label"]
+                    if isinstance(secondary_topic, str) and secondary_topic
+                    else None
+                ),
+                selected_effect=secondary_selected_effect,
+                allowed_values=topic_allowed,
+            ),
+            "hard_negative_mode": _axis_payload(
+                key="hard_negative_mode",
+                selected=hard_negative_mode if isinstance(hard_negative_mode, str) and hard_negative_mode else None,
+                selected_label=(
+                    HARD_NEGATIVE_LABELS[hard_negative_mode]
+                    if isinstance(hard_negative_mode, str) and hard_negative_mode
+                    else None
+                ),
+                selected_effect=hard_negative_mode_effect,
+                allowed_values=HARD_NEGATIVE_LABELS,
+                only_when="complexity == hard_negative",
+            ),
+            "hard_negative_intensity": _axis_payload(
+                key="hard_negative_intensity",
+                selected=(
+                    hard_negative_intensity
+                    if isinstance(hard_negative_intensity, str) and hard_negative_intensity
+                    else None
+                ),
+                selected_label=(
+                    HARD_NEGATIVE_INTENSITY_LABELS[hard_negative_intensity]
+                    if isinstance(hard_negative_intensity, str) and hard_negative_intensity
+                    else None
+                ),
+                selected_effect=hard_negative_intensity_effect,
+                allowed_values=HARD_NEGATIVE_INTENSITY_LABELS,
+                only_when="complexity == hard_negative",
+            ),
+        }
+
     def _load_or_create_config(
         self,
         *,
@@ -732,13 +1069,26 @@ class InstructionServerApp:
             "hard_negative_intensity": hard_negative_intensity,
         }
         examples = self._pick_reference_examples(primary_topic, secondary_topic, rng)
-        prompt = self._render_instruction_prompt(dimensions, examples)
+        must_include = self._collect_mandatory_elements(dimensions)
+        must_avoid = self._collect_must_avoid(dimensions)
+        style_brief = self._build_style_brief(dimensions)
+        dimension_guide = self._build_dimension_guide(dimensions)
+        prompt = self._render_instruction_prompt(
+            dimensions,
+            examples,
+            must_include=must_include,
+            must_avoid=must_avoid,
+        )
         return {
             "instruction_id": instruction_id,
             "agent_id": agent_id,
             "issued_at": _utc_now(),
             "signature": signature,
             "dimensions": dimensions,
+            "dimension_guide": dimension_guide,
+            "style_brief": style_brief,
+            "must_include": must_include,
+            "must_avoid": must_avoid,
             "reference_examples": examples,
             "prompt": prompt,
         }
@@ -786,6 +1136,9 @@ class InstructionServerApp:
         self,
         dimensions: dict[str, str | None],
         examples: list[dict[str, str]],
+        *,
+        must_include: list[str] | None = None,
+        must_avoid: list[str] | None = None,
     ) -> str:
         primary_topic = str(dimensions["primary_topic"])
         secondary_topic = dimensions.get("secondary_topic")
@@ -795,28 +1148,9 @@ class InstructionServerApp:
         if isinstance(secondary_topic, str) and secondary_topic:
             topic_labels.append(TOPIC_TEMPLATES[secondary_topic]["label"])
 
-        mandatory_elements = []
-        mandatory_elements.extend(TOPIC_TEMPLATES[primary_topic]["elements"])
-        if isinstance(secondary_topic, str) and secondary_topic:
-            mandatory_elements.extend(TOPIC_TEMPLATES[secondary_topic]["elements"])
-        mandatory_elements.extend(FORMAT_REQUIREMENTS[str(dimensions["format"])])
-        mandatory_elements.extend(LENGTH_REQUIREMENTS[str(dimensions["length_band"])])
-        mandatory_elements.extend(NOISE_REQUIREMENTS[str(dimensions["noise"])])
-        mandatory_elements.extend(NUMERIC_REQUIREMENTS[str(dimensions["numeric_density"])])
-        mandatory_elements.extend(DATE_PRECISION_REQUIREMENTS[str(dimensions["date_precision"])])
-        if isinstance(hard_negative_mode, str) and hard_negative_mode:
-            mandatory_elements.extend(HARD_NEGATIVE_REQUIREMENTS[hard_negative_mode])
+        deduped_elements = must_include if must_include is not None else self._collect_mandatory_elements(dimensions)
+        forbidden_elements = must_avoid if must_avoid is not None else self._collect_must_avoid(dimensions)
         hard_negative_intensity = dimensions.get("hard_negative_intensity")
-        if isinstance(hard_negative_intensity, str) and hard_negative_intensity:
-            mandatory_elements.extend(HARD_NEGATIVE_INTENSITY_REQUIREMENTS[hard_negative_intensity])
-
-        deduped_elements: list[str] = []
-        seen = set()
-        for item in mandatory_elements:
-            if item in seen:
-                continue
-            seen.add(item)
-            deduped_elements.append(item)
 
         lines = [
             "Génère un seul énoncé de succession en français.",
@@ -841,12 +1175,10 @@ class InstructionServerApp:
         lines.append("Contraintes :")
         for item in deduped_elements:
             lines.append(f"- {item}")
-        lines.extend(
-            [
-                "- Ne donne ni solution, ni analyse, ni liste de points juridiques.",
-                "- Réponds uniquement par l'énoncé final.",
-            ]
-        )
+        lines.append("À éviter :")
+        for item in forbidden_elements:
+            lines.append(f"- {item}")
+        lines.append("- Réponds uniquement par l'énoncé final.")
         if examples:
             lines.append("Repères de style (à ne pas recopier mot pour mot) :")
             for example in examples:
