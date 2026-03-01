@@ -147,6 +147,155 @@ Quality guardrails added after initial samples:
 - reject submissions that leak enum codes like `MAJUSCULES_AVEC_UNDERSCORE` into the free-form text
 - harden prompts so agents translate enum codes into natural French (no underscores)
 
+## How Synthetic Cases Are Generated (Code-Accurate)
+
+This section describes the exact generation loop implemented by the instruction
+server.
+
+Source of truth:
+
+- `src/ministral_ft/case_instruction_server.py`
+
+### 1) Issue an instruction (`/next-instruction`)
+
+The server picks a set of diversity dimensions (persona, voice, noise, numeric
+density, date precision, complexity, topics, etc.) by *balancing toward target
+quotas*:
+
+- selection uses `_pick_underrepresented(...)` so underrepresented buckets are
+  preferentially chosen
+- recent “signatures” are avoided to reduce short-range repetition
+- some topic/persona combinations are blocked (example: PACS/concubin persona
+  excludes some matrimonial-regime topics) to reduce forced contradictions
+
+### 2) Generate the target (server-side, schema-driven)
+
+The server generates a **sparse** structured payload first, then encodes it as
+TOON.
+
+Key steps:
+
+1. Load the master schema (`../w5/glinerExtract/schema/schema.full.json`) and
+   build an index of allowed nodes and leaf specs (paths + enums + expected
+   scalar types).
+2. Choose a set of leaf paths to populate:
+   - mandatory identity paths (defunt name, marital status, death date, etc.)
+   - additional mandatory paths derived from persona/topic
+   - then probabilistic selection of other leaves under topic-related schema
+     prefixes (probability depends on complexity)
+   - optional extra prefixes are sometimes sampled to add cross-topic diversity
+3. Fill leaf values with typed generators:
+   - enums are sampled from allowed values
+   - numbers/dates use key-aware heuristics (age, amounts, ratios, durations)
+   - names use `faker` if available, otherwise synthetic name lists
+   - string fallbacks are always concrete (cities / asset labels), never generic
+     placeholders
+4. Repair / harmonize business invariants:
+   - marital status ↔ partner presence/link type
+   - drop matrimonial regime blocks when not in a marriage context
+   - age/date consistency across person blocks
+   - insurance contract insured name matches the defunt
+   - donation donor != beneficiary
+   - ensure topic blocks exist (e.g. insurance topic -> at least one contract;
+     Dutreil topic -> enterprise block present; etc.)
+5. Validate and retry if needed (up to 50 attempts):
+   - sparse-only validation (no `null`, no empty objects/lists, no empty strings)
+   - schema-path + type + enum validation against the master schema index
+   - business coherence validation (core sanity checks + topic-specific checks)
+   - topic alignment validation: the declared topics must actually be present in
+     the payload (required leaf paths / prefixes)
+6. Encode the JSON payload to TOON using the official TOON CLI (`npx
+   @toon-format/cli --encode`), then decode-validate to ensure the TOON syntax
+   round-trips.
+
+Important note:
+
+- even for “hard negative” cases, the **target is always schema-valid and
+  coherent**. “Hard negative” is implemented mostly as text-level ambiguity
+  (agents are instructed to include a realistic ambiguity/contradiction), not by
+  producing invalid targets.
+
+### 3) Ask LLM agents to generate the text (input-from-target)
+
+The server returns:
+
+- `instruction_id`
+- `target_toon`
+- a prompt augmented with:
+  - the TOON block itself
+  - explicit rules: every TOON fact must appear in the narrative, but reformulated
+    in natural French
+  - strict “no-leakage” rules: no `snake_case`, no `MAJUSCULES_AVEC_UNDERSCORE`,
+    no JSON/TOON in the output, no invented facts
+
+Agents then write one free-form French description matching the target and
+submit it back.
+
+### 4) Submit and validate (`/submit-case`)
+
+On submission the server enforces:
+
+- instruction existence + “not already submitted”
+- target TOON decoding validation (rejects JSON-looking payloads; TOON required)
+- **name coverage**: every value under `nom` / `*_nom` / `*_noms` in the decoded
+  target must appear in the free-form text (normalized matching with partial
+  last-name fallback)
+- hard rejection if the narrative contains:
+  - `snake_case` keys (regex-based)
+  - enum-like tokens in `ALL_CAPS_WITH_UNDERSCORES` (regex-based)
+- similarity warnings (Jaccard) are computed to detect exact duplicates / near
+  duplicates, but do not hard-block the sample
+
+If valid, the server stores:
+
+- the raw case submission (with dimensions + validation metadata)
+- per-instruction artifacts (issued + submitted JSON files)
+- a merged training export file in Mistral SFT format (`messages`)
+
+## Guardrails We Had To Add (And Why)
+
+This project required several rounds of manual QA to find the right integrity
+constraints. The key “hard” guardrails that emerged are:
+
+1. Target-first generation
+- Text-first generation caused hallucinated labels and non-deterministic targets.
+- Target-first enforces determinism and schema validity; LLM creativity is used
+  only for linguistic rendering.
+
+2. Sparse-only targets (omit instead of `null`)
+- Mixing “missing fields” as sometimes `null` and sometimes “absent” created
+  inconsistent supervision signals.
+- We standardized on sparse-only: omit missing branches entirely.
+
+3. Persona/topic coherence constraints
+- Without constraints, some persona/topic pairs forced contradictions (e.g. a
+  PACS persona paired with heavy matrimonial-regime liquidation).
+- We added mandatory leaf paths per persona and blocked a few topic choices for
+  certain personas.
+
+4. Schema-token leakage rejection
+- Early samples showed LLMs sometimes copied enum tokens (underscored caps) or
+  schema keys (snake_case) into the narrative.
+- We made this a hard rejection server-side and reinforced it in prompts.
+
+5. Business integrity repair + validation
+- The generator must produce coherent legal facts (within the simplified model).
+- We added a dedicated repair pass plus a dedicated business-coherence validator
+  to catch issues like inconsistent marital status/partner link types, invalid
+  ages vs dates, etc.
+
+## Manual QA / Smoke Tests We Repeated
+
+While iterating, the recurring manual checks were:
+
+- sample the last generated submissions and read them (text + TOON) to spot
+  contradictions or schema leaks
+- scan the exported JSONL for forbidden patterns (`snake_case`, enum tokens)
+- ensure line counts match expected “submitted” counts
+- verify the server stays stable during long runs (restartability, port reuse)
+- confirm the training export is always valid JSONL and follows the `messages`
+  format required by Mistral fine-tuning
+
 ## Current Production-Oriented Quota Profile (v6)
 
 The active synthetic generation profile is currently tuned for future structured
