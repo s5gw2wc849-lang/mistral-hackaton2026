@@ -349,6 +349,74 @@ This profile is intentionally biased toward cleaner, more extractable inputs:
 - more exact dates
 - fewer hard negatives than earlier profiles
 
+## Why These Quotas (And How We Enforce Them)
+
+The quota profile is designed to maximize downstream extraction reliability
+while still exposing the model to realistic noise and failure modes.
+
+### Why the ratios look like this
+
+Hard negatives (`16%`) exist to reduce false positives and over-extraction. We
+kept them below ~20% because:
+
+- too many hard negatives can teach the model to be overly conservative
+- we still want the majority of training samples to be “actionable” and richly
+  extractable
+- in a fixed-schema extractor, precision failures are costly, but recall still
+  matters
+
+We skew hard negatives toward “soft” realistic traps:
+
+- intensity: `80% soft`, `20% hard`
+- modes: missing key info / unclear death / contradictions / out-of-scope
+
+Cleanliness is biased toward parseable text:
+
+- `42%` clean, `22%` light mistakes
+- only `3%` very messy (because extremely noisy text tends to add label noise)
+
+Numeric content is biased toward information-rich cases:
+
+- `68%` cases contain multiple amounts or amounts+dates
+- `6%` cases contain no amount (kept as a minority so the model doesn’t assume
+  “every case has money”)
+
+Dates are mostly exact because they are critical for taxation / timing branches:
+
+- `65%` at least one exact date
+- `20%` approximate
+- `15%` no required dates
+
+Lengths are biased toward medium/long because real legal intakes are rarely one
+sentence:
+
+- `74%` medium or long
+
+### How the code enforces quotas
+
+Quotas are **not** sampled as naive random weights. Instead, each dimension is
+balanced toward its target share over time:
+
+- targets live as `{ bucket -> share }` dictionaries in
+  `src/ministral_ft/case_instruction_server.py` (e.g. `COMPLEXITY_TARGETS`,
+  `NOISE_TARGETS`, `NUMERIC_TARGETS`, `TOPIC_TARGETS`, etc.)
+- the server keeps running counts of already *issued* instructions per bucket
+- at each new instruction, `_pick_underrepresented(...)` picks the bucket with
+  the smallest `current_count / target_share` ratio (ties broken randomly)
+
+This makes the distribution converge toward the desired ratios and avoids drift
+when generation is interrupted or runs in long waves.
+
+There are also a few dependency rules to avoid incoherent combinations:
+
+- if `numeric_density == montants_et_dates`, the server forces a date precision
+  that is not “none”
+- certain persona/topic pairs are blocked to reduce forced contradictions
+  (example: PACS/concubin persona excludes some matrimonial-regime liquidation
+  topics)
+- secondary topics are sampled more often for complex/hard-negative cases to
+  increase multi-layer situations
+
 ## Why The Quotas Look Like This
 
 The generation profile is designed for a future `description -> structured JSON`
