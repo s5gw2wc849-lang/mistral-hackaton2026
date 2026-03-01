@@ -2393,9 +2393,16 @@ class InstructionServerApp:
 
         persona = str(dimensions.get("persona") or "")
         primary_topic = str(dimensions.get("primary_topic") or "ordre_heritiers")
-        if primary_topic == "pacs_concubinage":
+        secondary_topic = (
+            str(dimensions.get("secondary_topic") or "").strip()
+            if isinstance(dimensions.get("secondary_topic"), str)
+            else ""
+        )
+        if primary_topic == "regimes_matrimoniaux" or secondary_topic == "regimes_matrimoniaux":
+            topic_statut = "MARIE"
+        elif primary_topic == "pacs_concubinage" or secondary_topic == "pacs_concubinage":
             topic_statut = "PACSE" if rng.random() < 0.7 else "CELIBATAIRE"
-        elif primary_topic in {"famille_recomposee", "regimes_matrimoniaux"}:
+        elif primary_topic == "famille_recomposee":
             topic_statut = "MARIE"
         else:
             topic_statut = rng.choice(["MARIE", "PACSE", "CELIBATAIRE", "DIVORCE", "VEUF"])
@@ -2658,10 +2665,19 @@ class InstructionServerApp:
             date_precision = _pick_underrepresented(DATE_PRECISION_TARGETS, counts["date_precision"], rng)
         complexity = _pick_underrepresented(COMPLEXITY_TARGETS, counts["complexity"], rng)
 
+        blocked_topics: set[str] = set()
+        if persona in {"partenaire_pacs", "concubin"}:
+            blocked_topics.add("regimes_matrimoniaux")
+
         if force_topic and force_topic in TOPIC_TARGETS:
             primary_topic = force_topic
         else:
-            primary_topic = _pick_underrepresented(TOPIC_TARGETS, counts["primary_topic"], rng)
+            primary_topic = _pick_underrepresented(
+                TOPIC_TARGETS,
+                counts["primary_topic"],
+                rng,
+                exclude=blocked_topics,
+            )
 
         secondary_topic: str | None = None
         if complexity in {"complexe", "hard_negative"} or rng.random() < 0.55:
@@ -2669,7 +2685,7 @@ class InstructionServerApp:
                 TOPIC_TARGETS,
                 counts["primary_topic"],
                 rng,
-                exclude={primary_topic},
+                exclude={primary_topic} | blocked_topics,
             )
 
         hard_negative_mode: str | None = None
@@ -3159,6 +3175,8 @@ class InstructionRequestHandler(BaseHTTPRequestHandler):
 
 
 class InstructionHTTPServer(ThreadingHTTPServer):
+    allow_reuse_address = True
+
     def __init__(self, server_address: tuple[str, int], app: InstructionServerApp) -> None:
         super().__init__(server_address, InstructionRequestHandler)
         self.app = app

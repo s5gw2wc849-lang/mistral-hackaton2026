@@ -118,6 +118,8 @@ Quality guardrails added after initial samples:
 - removed placeholder strings like “Clause ou élément mentionné” / “Information fournie”
 - fixed regime/statut coherence (no “PACSE + participation”, etc.)
 - reject submissions that leak schema keys in `snake_case` into the free-form text
+- reject submissions that leak enum codes like `MAJUSCULES_AVEC_UNDERSCORE` into the free-form text
+- harden prompts so agents translate enum codes into natural French (no underscores)
 
 ## Current Production-Oriented Quota Profile (v6)
 
@@ -244,6 +246,7 @@ At the time of this note:
 
 - the instruction server is configured with the v6 quota profile
 - the repo already contains the updated summaries and generated training exports
+- current server counters: `issued=147`, `submitted=140` (as of 2026-03-01)
 
 ## Immediate Next Steps
 
