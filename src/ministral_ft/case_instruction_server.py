@@ -1765,6 +1765,14 @@ class InstructionServerApp:
         force_topic = str(payload.get("topic") or "").strip() or None
 
         with self.lock:
+            generation_target = int(self.config.get("generation_target") or 0)
+            if generation_target and len(self.submitted) >= generation_target:
+                return {
+                    "done": True,
+                    "message": "generation_target reached",
+                    "coverage": self._coverage_snapshot(),
+                }
+
             instruction = self._build_instruction(agent_id=agent_id, force_topic=force_topic)
             sequence = len(self.issued) + 1
             target_payload: dict[str, Any] | None = None
