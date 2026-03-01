@@ -113,6 +113,32 @@ Key pipeline design:
 - Agents only generate `case_text` from the provided TOON and style constraints.
 - Targets are **sparse only**: no `null`, no empty objects/lists, only relevant branches.
 
+## Method Pivot: Target-First (Deterministic) + Text-From-Target (Creative)
+
+Early idea (initial baseline):
+
+- generate a free-form succession description first (LLM creativity)
+- then generate / fill the target structured JSON from that text (LLM “labeling”)
+
+What we switched to (current production path):
+
+- generate the structured target **first**, server-side:
+  - schema-driven sparse JSON payload (deterministic constraints, enums, types)
+  - encode to **TOON** for a cheaper and more robust serialized target format
+- then ask LLM agents to generate the **input text** from that target:
+  - natural French, varied personas/voices/noise
+  - strict guardrails to avoid leaking schema tokens into the narrative
+
+Why this pivot matters:
+
+- We need the target (`JSON` / `TOON`) to be **deterministic, schema-valid, and consistent**.
+- We want the text to be **creative, diverse, and realistic**, which is where LLMs shine.
+- This flips the usual direction: we synthesize the **output label** first, then generate
+  the **input** that matches it. It reduces hallucinated labels and formatting failures.
+
+In other words: we generate the dataset by producing the *output* and asking agents to
+produce the matching *input*.
+
 Quality guardrails added after initial samples:
 
 - removed placeholder strings like “Clause ou élément mentionné” / “Information fournie”
@@ -246,7 +272,15 @@ At the time of this note:
 
 - the instruction server is configured with the v6 quota profile
 - the repo already contains the updated summaries and generated training exports
-- current server counters: `issued=147`, `submitted=140` (as of 2026-03-01)
+- current server counters: `issued=3803`, `submitted=3760` (as of 2026-03-01)
+- remaining to target: `1240` (generation paused after a completed wave)
+
+Operational detail (generation throughput):
+
+- Agents were initially orchestrated one case at a time, but this created heavy overhead.
+- We introduced an internal `BATCH_SIZE` per agent (e.g. 20 → 50 → 100): each agent still
+  generates and submits cases *one-by-one*, but it loops locally before replying back to
+  the coordinator. This improves throughput without changing the per-case constraints.
 
 ## Immediate Next Steps
 
