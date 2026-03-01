@@ -32,6 +32,7 @@ SUMMARY_JSON_FILENAME = "summary.json"
 SUMMARY_MD_FILENAME = "summary.md"
 GENERATED_TRAIN_FILENAME = "generated_cases_train_mistral.jsonl"
 FULL_TRAIN_FILENAME = "full_training_cases_mistral.jsonl"
+FORBIDDEN_CAPS_UNDERSCORE_RE = re.compile(r"\b[A-Z]{2,}(?:_[A-Z0-9]{2,})+\b")
 PAIR_TRAINING_SYSTEM_PROMPT = (
     "Tu extrais les informations d'un énoncé de succession en français. "
     "Tu réponds uniquement par du TOON valide conforme au schéma cible attendu."
@@ -2390,13 +2391,26 @@ class InstructionServerApp:
         partner_name = self._synth_name(rng, used_names)
         child_names = [self._synth_name(rng, used_names), self._synth_name(rng, used_names)]
 
+        persona = str(dimensions.get("persona") or "")
         primary_topic = str(dimensions.get("primary_topic") or "ordre_heritiers")
         if primary_topic == "pacs_concubinage":
-            statut = "PACSE" if rng.random() < 0.7 else "CELIBATAIRE"
+            topic_statut = "PACSE" if rng.random() < 0.7 else "CELIBATAIRE"
         elif primary_topic in {"famille_recomposee", "regimes_matrimoniaux"}:
-            statut = "MARIE"
+            topic_statut = "MARIE"
         else:
-            statut = rng.choice(["MARIE", "PACSE", "CELIBATAIRE", "DIVORCE", "VEUF"])
+            topic_statut = rng.choice(["MARIE", "PACSE", "CELIBATAIRE", "DIVORCE", "VEUF"])
+
+        persona_statut: str | None = None
+        if persona == "conjoint":
+            persona_statut = "MARIE"
+        elif persona == "partenaire_pacs":
+            persona_statut = "PACSE"
+        elif persona == "concubin":
+            persona_statut = "CELIBATAIRE"
+        elif persona == "beau_enfant":
+            persona_statut = "MARIE"
+
+        statut = persona_statut or topic_statut
 
         complexity = str(dimensions.get("complexity") or "intermediaire")
         include_proba = {
@@ -2427,6 +2441,36 @@ class InstructionServerApp:
                 {
                     ("famille", "partenaire", "nom"),
                     ("famille", "partenaire", "lien", "type"),
+                }
+            )
+        if persona == "concubin":
+            mandatory_paths.update(
+                {
+                    ("famille", "partenaire", "nom"),
+                    ("famille", "partenaire", "lien", "type"),
+                }
+            )
+        if persona in {"enfant", "beau_enfant"}:
+            mandatory_paths.add(("famille", "descendants", "enfants", "*", "nom"))
+        if persona == "beau_enfant":
+            mandatory_paths.add(
+                ("famille", "descendants", "enfants", "*", "est_d_une_precedente_union")
+            )
+        if persona == "petit_enfant":
+            mandatory_paths.update(
+                {
+                    ("famille", "descendants", "enfants", "*", "nom"),
+                    ("famille", "descendants", "petits_enfants", "*", "nom"),
+                    ("famille", "descendants", "petits_enfants", "*", "parent_nom"),
+                }
+            )
+        if persona == "fratrie":
+            mandatory_paths.add(("famille", "collateraux", "freres_soeurs", "*", "nom"))
+        if persona == "associe":
+            mandatory_paths.update(
+                {
+                    ("patrimoine", "actifs", "*", "type"),
+                    ("patrimoine", "actifs", "*", "entreprise", "type"),
                 }
             )
 
@@ -2521,6 +2565,14 @@ class InstructionServerApp:
                 raise ValueError(
                     "format invalide: ne pas inclure de clés internes en snake_case dans l'énoncé "
                     "(ex: statut_matrimonial, option_successorale)"
+                )
+            caps_match = FORBIDDEN_CAPS_UNDERSCORE_RE.search(case_text)
+            if caps_match:
+                token = caps_match.group(0)
+                raise ValueError(
+                    "format invalide: ne pas inclure de codes en MAJUSCULES_AVEC_UNDERSCORE dans l'énoncé "
+                    f"(ex: PARTENAIRE_PACS, NEVEU_NIECE). Reçu: {token!r}. "
+                    "Traduire en français naturel (sans underscores)."
                 )
             record = {
                 "instruction_id": instruction_id,
@@ -2834,10 +2886,15 @@ class InstructionServerApp:
         lines.extend(
             [
                 "Source de vérité des faits: le TOON ci-dessous.",
-                "Règle A: chaque information présente dans le TOON doit apparaître dans l'énoncé.",
+                "Règle A: chaque information présente dans le TOON doit apparaître dans l'énoncé, mais reformulée en français naturel.",
+                "  - Ne jamais recopier des codes d'énumération du TOON (ex: PARTENAIRE_PACS, NEVEU_NIECE, PROPRE_DEFUNT, IMPOT_SUCCESSION).",
+                "  - Si une valeur ressemble à `MAJUSCULES_AVEC_UNDERSCORE`, tu dois la traduire en mots (sans underscores).",
+                "  - Exemples: PARTENAIRE_PACS -> partenaire de PACS ; NEVEU_NIECE -> neveu / nièce ;",
+                "    COMMUNAUTE_REDUITE_AUX_ACQUETS -> communauté réduite aux acquêts ; A_TITRE_UNIVERSEL -> à titre universel.",
                 "Règle B: ne pas ajouter de nouvelles informations structurées (noms, dates, montants, liens, biens) absentes du TOON.",
                 "Règle C: ne pas donner la solution juridique, seulement les faits.",
-                "Règle D: ne pas recopier la structure ou les clés du TOON (pas de `snake_case`, pas de `champ: valeur`).",
+                "Règle D: ne pas recopier la structure ou les clés du TOON (pas de `snake_case`, pas de `champ: valeur`, pas de JSON/TOON dans la réponse).",
+                "Règle E: tu peux utiliser des sigles usuels (PACS, SCI, SARL, AV), mais pas des tokens en MAJUSCULES_AVEC_UNDERSCORE.",
                 "Sortie attendue: texte brut uniquement (l'énoncé), sans JSON.",
                 "",
                 "TOON:",
@@ -2892,6 +2949,10 @@ class InstructionServerApp:
 
         if re.search(r"\b[a-z]+_[a-z_]+\b", case_text):
             warnings.append("le texte contient du 'snake_case' (probable recrachage de schéma)")
+        if FORBIDDEN_CAPS_UNDERSCORE_RE.search(case_text):
+            warnings.append(
+                "le texte contient un token en MAJUSCULES_AVEC_UNDERSCORE (probable recrachage d'énumération)"
+            )
 
         return {
             "word_count": len(case_text.split()),

@@ -663,3 +663,18 @@ Smoke tests executed (temporary state dir, HTTP end-to-end):
 - `/next-instruction` with forced `topic=assurance_vie` returned a TOON that decodes and includes `assurance_vie.contrats`
 - `/submit-case` rejected payloads containing `target_toon` and accepted a `case_text` containing all extracted `*_nom(s)`
 - `/dashboard` reflected `issued=1` / `submitted=1`
+
+### 24. Preventing schema-token leakage + persona/target coherence
+
+We hit two recurring failure modes in early generations:
+
+- Agents copy enum codes from the TOON into the French text (examples: `PARTENAIRE_PACS`, `NEVEU_NIECE`, `PROPRE_DEFUNT`, `IMPOT_SUCCESSION`).
+- Some agents "invent" narrator facts (e.g. "I am the PACS partner") that are not present in the target, creating accidental contradictions in the training set.
+
+Mitigations implemented in the server:
+
+- Prompt hardening: `/next-instruction` prompt now explicitly requires translating any `MAJUSCULES_AVEC_UNDERSCORE` enum codes into natural French (no underscores).
+- Submission validation: `/submit-case` now rejects any `case_text` containing tokens matching `\\b[A-Z]{2,}(?:_[A-Z0-9]{2,})+\\b`.
+- Persona-target coherence: the schema-driven target builder now ensures the TOON includes the minimal people/blocks implied by the persona, so "I am the spouse / PACS partner / sibling / child" cannot be true in text unless it is also true in the target.
+
+This keeps the training corpus usable for extraction (French input) without leaking internal schema strings into the text and reduces accidental contradictions.
