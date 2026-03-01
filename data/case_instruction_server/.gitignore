@@ -1,3 +1,10 @@
 *
 !.gitignore
 !README.md
+
+# Keep the core training artifacts in git (avoid committing the huge per-instruction/per-submission folders).
+!config.json
+!summary.md
+!summary.json
+!generated_cases.jsonl
+!full_training_cases_mistral.jsonl
