@@ -296,6 +296,59 @@ While iterating, the recurring manual checks were:
 - confirm the training export is always valid JSONL and follows the `messages`
   format required by Mistral fine-tuning
 
+## Issue Encountered: “Schema Leakage” in Generated Case Texts
+
+After generating a large batch of `{case_text, target_toon}` pairs, we found a
+non-trivial quality issue: some `case_text` outputs are not “natural French
+intake descriptions”, but look like **serialized fields** copied from the TOON
+(key-value listings, path-like labels, `True/False`, etc.).
+
+Concrete symptoms we observed in `data/case_instruction_server/generated_cases.jsonl`
+(`n=3760`):
+
+- `626 / 3760` (~16.6%) contain Python booleans `True` / `False` in the narrative.
+- `300 / 3760` (~8.0%) contain path-like markers using ` > ` (e.g. `famille > defunt > ...`).
+- `1815 / 3760` (~48.3%) contain more than 10 semicolons, a strong indicator of
+  “field dump” formatting rather than prose.
+- `748 / 3760` (~19.9%) contain more than 10 colons, also correlated with “field dump”.
+
+This is not acceptable for the product goal (free-form user description -> JSON),
+because it risks teaching the model to rely on **schema-like cues** that do not
+exist in real user inputs.
+
+Examples (abbreviated):
+
+- `INS-2942`: `famille defunt date deces : ... ; famille defunt statut matrimonial : CELIBATAIRE ; ...`
+- Some cases: `famille > defunt > ...` bullet lists
+- Some cases: numeric-only stubs with `False` embedded
+
+### Root Cause (Working Theory)
+
+Even with “no JSON/TOON” instructions, some persona/format combinations (notably
+“note dossier / mail brouillon / court”) push agents toward a checklist output.
+Also, if an agent sees the TOON and tries to be “safe”, it may copy it as a
+linearized field list instead of writing natural French.
+
+### Remediation Plan (Implemented Next)
+
+We will run a dedicated **repair pass**:
+
+1. Identify flagged cases (heuristics: `True/False`, ` > `, heavy `;` density).
+2. Re-ask LLM agents (in batch) to rewrite *only* the `case_text` into natural
+   French while:
+   - preserving all names/dates/amounts from the TOON,
+   - not inventing new facts,
+   - translating enum-ish tokens to words (no raw `CELIBATAIRE`, `JOURS`, etc.),
+   - avoiding key-value formatting (`champ: valeur`) and “field dump” lists.
+3. Re-validate the rewritten texts with stronger rejections:
+   - reject `True/False`,
+   - reject “path dump” markers (` > `),
+   - reject excessive `;` / `:` density (tunable threshold),
+   - keep the existing anti-`snake_case` and anti-`ALL_CAPS_WITH_UNDERSCORE` checks.
+
+This repair is done **without changing the `target_toon`**, preserving the
+quota distribution of structured targets.
+
 ## Current Production-Oriented Quota Profile (v6)
 
 The active synthetic generation profile is currently tuned for future structured
