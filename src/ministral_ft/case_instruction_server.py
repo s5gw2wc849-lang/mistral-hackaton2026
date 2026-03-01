@@ -33,6 +33,21 @@ SUMMARY_MD_FILENAME = "summary.md"
 GENERATED_TRAIN_FILENAME = "generated_cases_train_mistral.jsonl"
 FULL_TRAIN_FILENAME = "full_training_cases_mistral.jsonl"
 FORBIDDEN_CAPS_UNDERSCORE_RE = re.compile(r"\b[A-Z]{2,}(?:_[A-Z0-9]{2,})+\b")
+FORBIDDEN_PYTHON_BOOL_RE = re.compile(r"\b(?:True|False)\b")
+FORBIDDEN_PATH_DUMP_RE = re.compile(r"\s>\s")
+FORBIDDEN_ENUM_BASIC_RE = re.compile(
+    r"\b(?:CELIBATAIRE|MARIE|PACSE|DIVORCE|VEUF|JOURS|MOIS|ANNEES)\b"
+)
+FORBIDDEN_SCHEMAISH_PHRASES_RE = re.compile(
+    r"\b(?:famille\s+defunt|contexte\s+procedure|patrimoine\s+actifs?|liberalites?\s+donations?)\b",
+    re.IGNORECASE,
+)
+FORBIDDEN_SCHEMAISH_DEFUNT_FIELDS_RE = re.compile(
+    r"\bdefunt\s+(?:date\s+deces|date\s+naissance|age\s+au\s+deces)\b",
+    re.IGNORECASE,
+)
+MAX_SEMICOLONS_IN_CASE_TEXT = 10
+MAX_COLONS_IN_CASE_TEXT = 10
 PAIR_TRAINING_SYSTEM_PROMPT = (
     "Tu extrais les informations d'un énoncé de succession en français. "
     "Tu réponds uniquement par du TOON valide conforme au schéma cible attendu."
@@ -2588,6 +2603,38 @@ class InstructionServerApp:
                     "format invalide: ne pas inclure de codes en MAJUSCULES_AVEC_UNDERSCORE dans l'énoncé "
                     f"(ex: PARTENAIRE_PACS, NEVEU_NIECE). Reçu: {token!r}. "
                     "Traduire en français naturel (sans underscores)."
+                )
+            if FORBIDDEN_PYTHON_BOOL_RE.search(case_text):
+                raise ValueError(
+                    "format invalide: ne pas inclure de booléens Python ('True'/'False') dans l'énoncé. "
+                    "Utiliser une formulation française (oui/non)."
+                )
+            if FORBIDDEN_PATH_DUMP_RE.search(case_text):
+                raise ValueError(
+                    "format invalide: ne pas inclure de chemins type 'famille > defunt > ...' dans l'énoncé. "
+                    "Reformuler en phrases françaises."
+                )
+            if FORBIDDEN_ENUM_BASIC_RE.search(case_text):
+                raise ValueError(
+                    "format invalide: ne pas inclure de tokens d'énumération en majuscules (ex: CELIBATAIRE, "
+                    "JOURS, MOIS). Traduire en français naturel."
+                )
+            if FORBIDDEN_SCHEMAISH_PHRASES_RE.search(case_text) or FORBIDDEN_SCHEMAISH_DEFUNT_FIELDS_RE.search(
+                case_text
+            ):
+                raise ValueError(
+                    "format invalide: l'énoncé ressemble à un dump de champs (ex: 'famille defunt ...', "
+                    "'defunt date deces ...'). Reformuler en français naturel."
+                )
+            if case_text.count(";") > MAX_SEMICOLONS_IN_CASE_TEXT:
+                raise ValueError(
+                    "format invalide: trop de séparateurs ';' (probable dump de champs). "
+                    f"Limite: {MAX_SEMICOLONS_IN_CASE_TEXT}."
+                )
+            if case_text.count(":") > MAX_COLONS_IN_CASE_TEXT:
+                raise ValueError(
+                    "format invalide: trop de séparateurs ':' (probable dump de champs). "
+                    f"Limite: {MAX_COLONS_IN_CASE_TEXT}."
                 )
             record = {
                 "instruction_id": instruction_id,
